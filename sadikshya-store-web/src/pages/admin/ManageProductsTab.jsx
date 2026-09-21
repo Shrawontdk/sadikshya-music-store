@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { productsApi } from '../../api/products';
+import { formatApiError } from '../../utils/errorHandler';
 import Modal from '../../components/common/Modal';
 import { Plus, Edit2, Trash2, PlusCircle, MinusCircle, AlertCircle, Package } from 'lucide-react';
 
@@ -111,21 +112,7 @@ export default function ManageProductsTab({ products = [], categories = [], onRe
       if (onRefresh) onRefresh();
     } catch (err) {
       console.error('Failed to save product via API:', err);
-      // If API server is offline during preview, update local products
-      if (!err.response || err.code === 'ERR_NETWORK') {
-        if (editingProduct) {
-          Object.assign(editingProduct, payload);
-        } else {
-          products.unshift({
-            id: 'prod-' + Date.now(),
-            ...payload,
-          });
-        }
-        setModalOpen(false);
-        if (onRefresh) onRefresh();
-      } else {
-        setError(err.response?.data?.message || 'Failed to save product. Please check requirements.');
-      }
+      setError(formatApiError(err, 'Failed to save product. Please check requirements.'));
     } finally {
       setLoading(false);
     }
@@ -140,12 +127,8 @@ export default function ManageProductsTab({ products = [], categories = [], onRe
       await productsApi.delete(id);
       if (onRefresh) onRefresh();
     } catch (err) {
-      console.warn('Delete product warning:', err);
-      const idx = products.findIndex((p) => p.id === id);
-      if (idx !== -1) {
-        products.splice(idx, 1);
-        if (onRefresh) onRefresh();
-      }
+      console.error('Delete product error:', err);
+      alert(formatApiError(err, 'Failed to delete instrument.'));
     }
   };
 

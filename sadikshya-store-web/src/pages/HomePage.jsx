@@ -4,46 +4,35 @@ import CategoryTiles from '../components/home/CategoryTiles';
 import FeaturedProducts from '../components/home/FeaturedProducts';
 import { productsApi } from '../api/products';
 import { categoriesApi } from '../api/categories';
-import { PRODUCTS as mockProducts } from '../data/products';
-import { ShieldAlert, Compass, Sparkles, Truck, RefreshCw } from 'lucide-react';
+import { formatApiError } from '../utils/errorHandler';
+import { ShieldAlert, Compass, Sparkles, Truck, RefreshCw, AlertCircle } from 'lucide-react';
 
 export default function HomePage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [apiOfflineNotice, setApiOfflineNotice] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadHomeData() {
       setLoading(true);
+      setError(null);
       try {
-        const [prodData, catData] = await Promise.allSettled([
+        const [prodData, catData] = await Promise.all([
           productsApi.getAll(),
           categoriesApi.getAll(),
         ]);
 
         if (!isMounted) return;
 
-        if (prodData.status === 'fulfilled' && Array.isArray(prodData.value) && prodData.value.length > 0) {
-          setProducts(prodData.value);
-        } else {
-          // Fallback to rich curated Nepali mock products for flawless demonstration if local backend is booting up
-          setProducts(mockProducts);
-          if (prodData.status === 'rejected') {
-            setApiOfflineNotice(true);
-          }
-        }
-
-        if (catData.status === 'fulfilled' && Array.isArray(catData.value)) {
-          setCategories(catData.value);
-        }
+        setProducts(Array.isArray(prodData) ? prodData : []);
+        setCategories(Array.isArray(catData) ? catData : []);
       } catch (err) {
-        console.warn('API fetch warning, using fallback catalog:', err);
+        console.error('Error fetching home page data:', err);
         if (isMounted) {
-          setProducts(mockProducts);
-          setApiOfflineNotice(true);
+          setError(formatApiError(err, 'Failed to load catalog from server.'));
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -59,14 +48,12 @@ export default function HomePage() {
 
   return (
     <div className="space-y-0">
-      {/* Backend API status badge (non-intrusive banner if ASP.NET backend isn't actively running on port 7105 yet) */}
-      {apiOfflineNotice && (
-        <div className="bg-[#f9ede7] border-b border-[#c85a32]/30 px-4 py-2 text-xs text-[#80182a] flex items-center justify-between">
+      {/* API error notice */}
+      {error && (
+        <div className="bg-rose-50 border-b border-rose-200 px-4 py-3 text-xs text-rose-800 flex items-center justify-between">
           <div className="flex items-center gap-2 max-w-5xl mx-auto">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-            <span>
-              <strong>Note:</strong> Connecting to ASP.NET Core API at <code>https://localhost:7105/api</code>. Displaying verified heirloom catalog while backend initiates.
-            </span>
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{error}</span>
           </div>
         </div>
       )}

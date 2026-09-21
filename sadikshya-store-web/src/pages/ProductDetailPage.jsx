@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productsApi } from '../api/products';
-import { PRODUCTS as mockProducts } from '../data/products';
+import { formatApiError } from '../utils/errorHandler';
 import { useCart } from '../context/CartContext';
 import SpecTable from '../components/products/SpecTable';
 import { soundSampler } from '../utils/soundSampler';
@@ -15,7 +15,8 @@ import {
   Truck, 
   Award,
   Plus,
-  Minus
+  Minus,
+  AlertCircle
 } from 'lucide-react';
 
 export default function ProductDetailPage() {
@@ -25,6 +26,7 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [addedNotice, setAddedNotice] = useState(false);
@@ -33,6 +35,7 @@ export default function ProductDetailPage() {
     let isMounted = true;
     async function loadProduct() {
       setLoading(true);
+      setError(null);
       try {
         const data = await productsApi.getById(id);
         if (isMounted && data) {
@@ -40,12 +43,10 @@ export default function ProductDetailPage() {
           setSelectedImage(data.imageUrl || data.image || '');
         }
       } catch (err) {
-        console.warn('Backend API detail not reachable, checking mock data:', err);
-        // Fallback to mock product
-        const fallback = mockProducts.find((p) => String(p.id) === String(id)) || mockProducts[0];
+        console.error('Failed to load instrument details:', err);
         if (isMounted) {
-          setProduct(fallback);
-          setSelectedImage(fallback.image || (fallback.gallery && fallback.gallery[0]) || '');
+          setError(formatApiError(err, 'The requested instrument could not be retrieved from the server.'));
+          setProduct(null);
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -96,6 +97,12 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+        {error ? (
+          <div className="inline-flex items-center gap-2 p-4 mb-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-sm">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <span>{error}</span>
+          </div>
+        ) : null}
         <h2 className="text-2xl font-heritage font-bold text-[#80182a]">Instrument Not Found</h2>
         <p className="mt-2 text-[#624f4b]">The instrument you requested could not be located in our inventory.</p>
         <Link to="/browse" className="mt-6 inline-block px-6 py-2.5 bg-[#80182a] text-white rounded-full text-sm font-semibold">

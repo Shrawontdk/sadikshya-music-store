@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { ordersApi } from '../../api/orders';
+import { formatApiError } from '../../utils/errorHandler';
 import StatusBadge from '../../components/common/StatusBadge';
 import { Package, MapPin, Phone, RefreshCw, AlertCircle, Check } from 'lucide-react';
 
@@ -20,16 +22,7 @@ export default function ManageOrdersTab({ orders = [], onRefresh }) {
       if (onRefresh) onRefresh();
     } catch (err) {
       console.error('Failed to update status on backend:', err);
-      // If offline preview, update local state
-      const order = orders.find((o) => o.id === orderId);
-      if (order) {
-        order.status = newStatus;
-        setSuccess(`Order #${orderId} status updated to ${newStatus}`);
-        setTimeout(() => setSuccess(null), 3500);
-        if (onRefresh) onRefresh();
-      } else {
-        setError(err.response?.data?.message || 'Error updating order status.');
-      }
+      setError(formatApiError(err, 'Error updating order status.'));
     } finally {
       setUpdatingId(null);
     }

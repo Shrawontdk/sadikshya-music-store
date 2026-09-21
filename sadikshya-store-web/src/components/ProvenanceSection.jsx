@@ -1,6 +1,6 @@
 import React from 'react';
 import { Award, Compass, ShieldCheck, Hammer, BookOpen } from 'lucide-react';
-import { ARTISAN_STORY } from '../data/products';
+import { ARTISAN_STORY } from '../data/artisanStory';
 
 export default function ProvenanceSection({ onExploreCatalog }) {
   const steps = [

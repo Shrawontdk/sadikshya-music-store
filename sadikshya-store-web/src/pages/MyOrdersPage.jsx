@@ -1,45 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ordersApi } from '../api/orders';
+import { formatApiError } from '../utils/errorHandler';
 import StatusBadge from '../components/common/StatusBadge';
-import { Package, Calendar, MapPin, Phone, ArrowRight } from 'lucide-react';
+import { Package, Calendar, MapPin, Phone, ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
     async function fetchOrders() {
       setLoading(true);
+      setError(null);
       try {
-        const data = await ordersApi.getMyOrders();
+        const data = await ordersApi.getMy();
         if (isMounted) {
           setOrders(Array.isArray(data) ? data : []);
         }
       } catch (err) {
-        console.warn('Could not fetch orders from ASP.NET backend:', err);
-        // Display sample order history for testing if backend is still spinning up
+        console.error('Could not fetch orders from backend:', err);
         if (isMounted) {
-          setOrders([
-            {
-              id: 'ORD-88291',
-              createdAt: '2026-09-18T14:32:00Z',
-              status: 'Shipped',
-              shippingAddress: 'Jhamsikhel, Ward 3, Lalitpur, Bagmati Province',
-              phoneNumber: '+977 9841392011',
-              totalAmount: 320.00,
-              items: [
-                {
-                  productId: 'patan-master-madal',
-                  productName: 'Patan Master Grade Madal',
-                  quantity: 1,
-                  price: 320.00,
-                  imageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80'
-                }
-              ]
-            }
-          ]);
+          setError(formatApiError(err, 'Failed to retrieve your orders.'));
+          setOrders([]);
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -62,6 +47,13 @@ export default function MyOrdersPage() {
           Track and inspect your handcrafted instrument orders and dispatch milestones.
         </p>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-4">

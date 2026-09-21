@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/products/ProductCard';
 import { productsApi } from '../api/products';
-import { PRODUCTS as mockProducts } from '../data/products';
-import { Search, SlidersHorizontal, Music2, RefreshCcw } from 'lucide-react';
+import { categoriesApi } from '../api/categories';
+import { formatApiError } from '../utils/errorHandler';
+import { Search, SlidersHorizontal, Music2, RefreshCcw, AlertCircle } from 'lucide-react';
 
 export default function BrowsePage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -11,7 +12,9 @@ export default function BrowsePage() {
   const initialSearch = searchParams.get('search') || '';
 
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Filters
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
@@ -19,22 +22,54 @@ export default function BrowsePage() {
   const [sortBy, setSortBy] = useState('featured');
   const [priceRange, setPriceRange] = useState('all');
 
+  // Load categories
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCategories() {
+      try {
+        const catRes = await categoriesApi.getAll();
+        if (isMounted && Array.isArray(catRes)) {
+          setCategories(catRes);
+        }
+      } catch (err) {
+        console.error('Failed to load categories:', err);
+      }
+    }
+    loadCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Determine categoryId for backend filtering if numeric or mapped
+  const activeCategoryId = useMemo(() => {
+    if (!selectedCategory || selectedCategory === 'all' || selectedCategory === 'traditional') {
+      return null;
+    }
+    // Check if selectedCategory is an ID or name in categories
+    const found = categories.find(
+      (c) =>
+        String(c.id) === String(selectedCategory) ||
+        c.name?.toLowerCase().includes(selectedCategory.toLowerCase())
+    );
+    return found ? found.id : null;
+  }, [selectedCategory, categories]);
+
   useEffect(() => {
     let isMounted = true;
     async function loadData() {
       setLoading(true);
+      setError(null);
       try {
-        const prodRes = await productsApi.getAll();
+        const prodRes = await productsApi.getAll(activeCategoryId);
         if (!isMounted) return;
-
-        if (Array.isArray(prodRes) && prodRes.length > 0) {
-          setProducts(prodRes);
-        } else {
-          setProducts(mockProducts);
-        }
+        setProducts(Array.isArray(prodRes) ? prodRes : []);
       } catch (err) {
-        console.warn('Fallback catalog loaded:', err);
-        if (isMounted) setProducts(mockProducts);
+        console.error('Failed to fetch products:', err);
+        if (isMounted) {
+          setError(formatApiError(err, 'Failed to fetch instruments from server.'));
+          setProducts([]);
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -44,7 +79,7 @@ export default function BrowsePage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [activeCategoryId]);
 
   // Filtered & Sorted items
   const filteredProducts = useMemo(() => {
@@ -148,15 +183,20 @@ export default function BrowsePage() {
               className="w-full px-3.5 py-2.5 text-sm bg-white border border-[#d4a359]/40 rounded-xl focus:outline-hidden focus:border-[#80182a] text-[#1f1412]"
             >
               <option value="">All Categories</option>
-              <option value="traditional">Nepali Traditional (All)</option>
-              <option value="madal">Madals (मादल)</option>
-              <option value="sarangi">Sarangis (सारङ्गी)</option>
-              <option value="dhime">Dhime Drums (धिमे)</option>
-              <option value="dhamphu">Dhamphu (डम्फु)</option>
-              <option value="murchunga">Murchunga (मुर्चुङ्गा)</option>
-              <option value="guitar">Guitars & Basses</option>
-              <option value="keyboard">Keyboards & Pianos</option>
-              <option value="string">Strings & Accessories</option>
+              {categories.length > 0 ? (
+                categories.map((c) => (
+                  <option key={c.id} value={String(c.id)}>
+                    {c.name}
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="madal">Madal</option>
+                  <option value="sarangi">Sarangi</option>
+                  <option value="dhime">Dhime</option>
+                  <option value="guitar">Guitars</option>
+                </>
+              )}
             </select>
           </div>
 
@@ -213,6 +253,13 @@ export default function BrowsePage() {
           )}
         </div>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Products Grid */}
       {loading ? (

@@ -9,6 +9,10 @@ export const ordersApi = {
   },
 
   // Customer: get own order history
+  getMy: async () => {
+    const response = await apiClient.get('/orders/my');
+    return response.data;
+  },
   getMyOrders: async () => {
     const response = await apiClient.get('/orders/my');
     return response.data;

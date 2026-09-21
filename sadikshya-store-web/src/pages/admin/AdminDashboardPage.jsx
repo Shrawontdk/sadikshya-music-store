@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { categoriesApi } from '../../api/categories';
 import { productsApi } from '../../api/products';
 import { ordersApi } from '../../api/orders';
-import { PRODUCTS as mockProducts } from '../../data/products';
+import { formatApiError } from '../../utils/errorHandler';
 import ManageCategoriesTab from './ManageCategoriesTab';
 import ManageProductsTab from './ManageProductsTab';
 import ManageOrdersTab from './ManageOrdersTab';
-import { ShieldCheck, Tag, Package, ShoppingCart, RefreshCw } from 'lucide-react';
+import { ShieldCheck, Tag, Package, ShoppingCart, RefreshCw, AlertCircle } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState('products'); // 'categories', 'products', 'orders'
@@ -15,71 +15,24 @@ export default function AdminDashboardPage() {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const loadAllAdminData = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const [catRes, prodRes, ordRes] = await Promise.allSettled([
+      const [catRes, prodRes, ordRes] = await Promise.all([
         categoriesApi.getAll(),
         productsApi.getAll(),
         ordersApi.getAll(),
       ]);
 
-      if (catRes.status === 'fulfilled' && Array.isArray(catRes.value)) {
-        setCategories(catRes.value);
-      } else {
-        setCategories([
-          { id: 1, name: 'Madal (मादल)', description: 'Traditional Nepali 2-headed folk drum' },
-          { id: 2, name: 'Sarangi (सारङ्गी)', description: 'Nepali bowed string instrument' },
-          { id: 3, name: 'Dhime & Percussion', description: 'Newari festive drums' },
-          { id: 4, name: 'Western Guitars', description: 'Acoustic and classical guitars' },
-        ]);
-      }
-
-      if (prodRes.status === 'fulfilled' && Array.isArray(prodRes.value) && prodRes.value.length > 0) {
-        setProducts(prodRes.value);
-      } else {
-        setProducts(mockProducts);
-      }
-
-      if (ordRes.status === 'fulfilled' && Array.isArray(ordRes.value)) {
-        setOrders(ordRes.value);
-      } else {
-        setOrders([
-          {
-            id: 'ORD-90211',
-            shippingAddress: 'Lalitpur Heritage Quarter, Patan Ward 2',
-            phoneNumber: '+977 9851092834',
-            totalAmount: 320.00,
-            status: 'Processing',
-            items: [
-              {
-                productId: 'patan-master-madal',
-                productName: 'Patan Master Grade Madal',
-                quantity: 1,
-                price: 320.00,
-              },
-            ],
-          },
-          {
-            id: 'ORD-90212',
-            shippingAddress: 'Thamel Chowk, Kathmandu',
-            phoneNumber: '+977 9841392011',
-            totalAmount: 480.00,
-            status: 'Shipped',
-            items: [
-              {
-                productId: 'gandharva-sarangi-soloist',
-                productName: 'Heritage Gandharva Sarangi Soloist',
-                quantity: 1,
-                price: 480.00,
-              },
-            ],
-          },
-        ]);
-      }
+      setCategories(Array.isArray(catRes) ? catRes : []);
+      setProducts(Array.isArray(prodRes) ? prodRes : []);
+      setOrders(Array.isArray(ordRes) ? ordRes : []);
     } catch (err) {
-      console.warn('Admin data load warning:', err);
+      console.error('Admin data load failed:', err);
+      setError(formatApiError(err, 'Failed to sync administrative data from backend API.'));
     } finally {
       setLoading(false);
     }
@@ -114,6 +67,13 @@ export default function AdminDashboardPage() {
           <span>Sync API Data</span>
         </button>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Tabs Navigation */}
       <div className="flex border-b border-[#d4a359]/30 mb-8 overflow-x-auto">

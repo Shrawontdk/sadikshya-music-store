@@ -50,17 +50,7 @@ export default function CheckoutPage() {
       setSuccessOrder(response || { id: 'ORD-' + Math.floor(Math.random() * 90000 + 10000) });
     } catch (err) {
       console.error('Order placement error:', err);
-      // If local ASP.NET core is offline during local preview, provide simulated confirmation
-      const isNetworkErr = !err.response || err.code === 'ERR_NETWORK';
-      if (isNetworkErr) {
-        clearCart();
-        setSuccessOrder({
-          id: 'ORD-DEMO-' + Math.floor(Math.random() * 90000 + 10000),
-          isSimulated: true,
-        });
-      } else {
-        setError(formatApiError(err, 'Failed to place order. Please verify your credentials and try again.'));
-      }
+      setError(formatApiError(err, 'Failed to place order. Please verify your details and try again.'));
     } finally {
       setLoading(false);
     }
@@ -93,11 +83,6 @@ export default function CheckoutPage() {
             <span>Contact Phone:</span>
             <span className="font-bold text-[#1f1412]">{phoneNumber}</span>
           </div>
-          {successOrder.isSimulated && (
-            <p className="text-[11px] text-amber-700 pt-2 border-t border-[#d4a359]/20">
-              * Simulated confirmation (ASP.NET Core API at <code>https://localhost:7105/api/orders</code> was unreachable).
-            </p>
-          )}
         </div>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
