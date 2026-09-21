@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Rozha+One&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-terracotta: #c85a32;
+    --color-terracotta-dark: #a2411e;
+    --color-maroon: #80182a;
+    --color-maroon-dark: #580d1b;
+    --color-brass: #d4a359;
+    --color-brass-dark: #a97e36;
+    --color-brass-light: #f4e5c4;
+    --color-parchment: #fff8f5;
+    --color-parchment-card: #f9ede7;
+    --color-parchment-deep: #f2ded5;
+    --color-ink: #1f1412;
+    --color-ink-muted: #624f4b;
+  }
+
+  body {
+    background-color: var(--color-parchment);
+    color: var(--color-ink);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .font-heritage {
+    font-family: 'Cinzel', serif;
+  }
+}
+
+/* Custom utility & pattern styling for Nepali traditional aesthetic */
+.bg-mandala-pattern {
+  background-color: #580d1b;
+  background-image: radial-gradient(#d4a359 0.75px, transparent 0.75px), radial-gradient(#d4a359 0.75px, #580d1b 0.75px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+}
+
+.bg-parchment-pattern {
+  background-color: #fff8f5;
+  background-image: radial-gradient(#c85a3215 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.brass-border {
+  border: 1px solid rgba(212, 163, 89, 0.45);
+}
+
+.brass-glow {
+  box-shadow: 0 0 25px -4px rgba(212, 163, 89, 0.28);
+}
+
+.maroon-gradient {
+  background: linear-gradient(135deg, #580d1b 0%, #80182a 50%, #400611 100%);
+}
+
+.terracotta-gradient {
+  background: linear-gradient(135deg, #c85a32 0%, #a2411e 100%);
+}
+
+.brass-gradient {
+  background: linear-gradient(135deg, #f4e5c4 0%, #d4a359 50%, #b68335 100%);
+}

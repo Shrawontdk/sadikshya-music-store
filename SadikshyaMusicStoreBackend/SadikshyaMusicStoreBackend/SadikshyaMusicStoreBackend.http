@@ -1,0 +1,6 @@
+@SadikshyaMusicStoreBackend_HostAddress = http://localhost:5186
+
+GET {{SadikshyaMusicStoreBackend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
